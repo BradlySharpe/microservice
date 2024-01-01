@@ -27,4 +27,5 @@ export interface IDynamiteJob {
     descriptionHTML: string;
     company: IDynamiteCompany;
     categories: IDynamiteCategories[];
+    expiresAt: Date;
 }
