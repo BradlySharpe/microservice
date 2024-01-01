@@ -25,7 +25,7 @@ type MiddlewareResponse struct {
 }
 
 func formatError(upstreamUrl string, errorMessage string) error {
-	return fmt.Errorf("upstream error from '%s'\n  - %s", upstreamUrl, errorMessage)
+	return fmt.Errorf("upstream error from '%s' - %s", upstreamUrl, errorMessage)
 }
 
 func processUpstream(upstreamUrl string) ([]mappers.Job, error) {
