@@ -17,6 +17,7 @@ export class Fetch {
                 .status(200)
                 .json({
                     error: null,
+                    mapper: "remotive",
                     data: await RemotiveController.getJobs()
                 })
                 ;
@@ -26,6 +27,7 @@ export class Fetch {
                 .status(500)
                 .json({
                     error: "An unknown error occurred",
+                    mapper: "remotive",
                     data: null
                 })
                 ;
