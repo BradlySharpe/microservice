@@ -9,6 +9,7 @@ echo "Removing all images, containers, and volumes..."
 # sudo docker image rm microservice-dynamite
 sudo docker image rm microservice-ziprecruiter
 # sudo docker image rm microservice-sendmessage
+# sudo docker image rm microservice-middleware
 
 echo "Starting..."
 sudo docker-compose up #--force-recreate

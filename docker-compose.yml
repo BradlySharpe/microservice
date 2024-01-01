@@ -13,8 +13,12 @@ x-environment: &environment
   PUID: $PUID
   GUID: $GUID
 
-x-api-environment: &api-environment
+x-api-middleware: &api-middleware
   <<: *environment
+  API_PORT: $DEFAULT_API_PORT
+
+x-api-backend: &api-backend
+  <<: *api-middleware
   API_PORT: $DEFAULT_API_PORT
   REDIS_PORT: $REDIS_PORT
   REDIS_EXPIRY_SECONDS: 43200 # 12 hours
@@ -44,11 +48,29 @@ services:
         ipv4_address: $IP_RABBITMQ
     <<: *common
 
+  middleware:
+    container_name: middleware
+    build: ./middleware
+    environment:
+      <<: *api-middleware
+      UPSTREAM_HOSTS: "http://remotive:$DEFAULT_API_PORT/fetch, http://dynamite:$DEFAULT_API_PORT/fetch, http://ziprecruiter:$DEFAULT_API_PORT/fetch"
+    networks:
+      microservices:
+        ipv4_address: $IP_MIDDLEWARE
+    ports:
+      - "$MIDDLEWARE_PORT:$DEFAULT_API_PORT"
+    depends_on:
+      - remotive
+      - dynamite
+      - ziprecruiter
+    <<: *common
+
+  # Disabled while developing
   # sendmessage:
   #   container_name: sendmessage
   #   build: ./sendmessage
   #   environment:
-  #     <<: *api-environment
+  #     <<: *api-backend
   #     QUEUE_NAMES: "$QUEUE_JOBS_REMOTIVE,$QUEUE_JOBS_DYNAMITE,$QUEUE_JOBS_ZIPRECRUITER"
   #   networks:
   #     microservices:
@@ -62,7 +84,7 @@ services:
     container_name: remotive
     build: ./remotive
     environment:
-      <<: *api-environment
+      <<: *api-backend
       CACHE_REDIS_KEY: "REMOTIVE_JOBS"
       ENDPOINT_API: "https://remotive.com/api/remote-jobs"
       QUEUE_JOBS: $QUEUE_JOBS_REMOTIVE
@@ -78,7 +100,7 @@ services:
     container_name: dynamite
     build: ./dynamite
     environment:
-      <<: *api-environment
+      <<: *api-backend
       CACHE_REDIS_KEY: "DYNAMITE_JOBS"
       ENDPOINT_API: "https://49hkl9g3sb-dsn.algolia.net/1/indexes/prod_jobs/query?x-algolia-agent=Algolia%20for%20JavaScript%20(4.22.0)%3B%20Browser%20(lite)&x-algolia-api-key=5c5e6ae4a54a14e4c1848efa50384242&x-algolia-application-id=49HKL9G3SB"
       DYNAMITE_POST_BODY: '{"query":"","disableExactOnAttributes":["description"],"facetFilters":[["flags.isVisible:true","flags.isFinished:true","flags.isExpired:true","flags.isFulfilled:true"],"flags.isBlocked:false",["locationSlugs:australia","locationSlugs:AU","locationSlugs:CX","locationSlugs:CC","locationSlugs:HM","locationSlugs:NZ","locationSlugs:NF","locationSlugs:oceania"]],"hitsPerPage":2000,"optionalFilters":[],"page":0,"removeWordsIfNoResults":"lastWords"}'
@@ -95,7 +117,7 @@ services:
     container_name: ziprecruiter
     build: ./ziprecruiter
     environment:
-      <<: *api-environment
+      <<: *api-backend
       CACHE_REDIS_KEY: "ZIPRECRUITER_JOBS"
       ENDPOINT_API: "123456"
       QUEUE_JOBS: $QUEUE_JOBS_ZIPRECRUITER
@@ -103,7 +125,7 @@ services:
       microservices:
         ipv4_address: $IP_ZIPRECRUITER
     ports:
-      - 8000:8080
+      - "$DEV_API_TESTING_PORT:8080"
     depends_on:
       - redis
       - rabbitmq
