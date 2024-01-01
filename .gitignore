@@ -1,0 +1,7 @@
+.env
+
+# Common paths
+**/dist
+
+# Node.JS projects
+**/node_modules
