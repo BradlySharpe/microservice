@@ -26,6 +26,7 @@ export class DynamiteJob {
     companyImage: string;
     categories: ICategory[];
     url: string;
+    expiresAt: Date;
 
     constructor(job: IDynamiteJob) {
         this.title = job.title;
@@ -45,6 +46,7 @@ export class DynamiteJob {
         this.companyImage = DynamiteJob.mapCompanyImage(job.company);
         this.categories = DynamiteJob.mapCategories(job.categories);
         this.url = DynamiteJob.mapJobUrl(this);
+        this.expiresAt = new Date(job.expiresAt);
     }
 
     private static mapSalary(salary: IDynamiteSalary) {
@@ -78,7 +80,8 @@ export class DynamiteJob {
         // Return the largest size image available
         const sizes = [ "lg", "md", "sm", "xs" ];
 
-        for (const size in sizes) {
+        for (const index in sizes) {
+            const size = sizes[index];
             if (Object.prototype.hasOwnProperty.call(company.icon, size)) {
                 if (company.icon[size].length > 0)
                     return company.icon[size];                
