@@ -81,7 +81,7 @@ services:
       <<: *api-environment
       CACHE_REDIS_KEY: "DYNAMITE_JOBS"
       ENDPOINT_API: "https://49hkl9g3sb-dsn.algolia.net/1/indexes/prod_jobs/query?x-algolia-agent=Algolia%20for%20JavaScript%20(4.22.0)%3B%20Browser%20(lite)&x-algolia-api-key=5c5e6ae4a54a14e4c1848efa50384242&x-algolia-application-id=49HKL9G3SB"
-      DYNAMITE_POST_BODY: '{"query":"","disableExactOnAttributes":["description"],"facetFilters":[["flags.isVisible:true","flags.isFinished:true","flags.isExpired:true","flags.isFulfilled:true"],"flags.isBlocked:false",["locationSlugs:australia","locationSlugs:AU","locationSlugs:CX","locationSlugs:CC","locationSlugs:HM","locationSlugs:NZ","locationSlugs:NF","locationSlugs:oceania"]],"hitsPerPage":10000,"optionalFilters":[],"page":0,"removeWordsIfNoResults":"lastWords"}'
+      DYNAMITE_POST_BODY: '{"query":"","disableExactOnAttributes":["description"],"facetFilters":[["flags.isVisible:true","flags.isFinished:true","flags.isExpired:true","flags.isFulfilled:true"],"flags.isBlocked:false",["locationSlugs:australia","locationSlugs:AU","locationSlugs:CX","locationSlugs:CC","locationSlugs:HM","locationSlugs:NZ","locationSlugs:NF","locationSlugs:oceania"]],"hitsPerPage":2000,"optionalFilters":[],"page":0,"removeWordsIfNoResults":"lastWords"}'
       QUEUE_JOBS: $QUEUE_JOBS_DYNAMITE
     networks:
       microservices:
