@@ -1,0 +1,110 @@
+version: "3"
+
+networks:
+  microservices:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: $IP_SUBNET
+          gateway: $IP_GATEWAY
+
+x-environment: &environment
+  TZ: $TZ
+  PUID: $PUID
+  GUID: $GUID
+
+x-api-environment: &api-environment
+  <<: *environment
+  API_PORT: $DEFAULT_API_PORT
+  REDIS_PORT: $REDIS_PORT
+  REDIS_EXPIRY_SECONDS: 43200 # 12 hours
+
+x-common: &common
+  restart: unless-stopped
+
+services:
+
+  redis:
+    container_name: redis
+    build: ./redis
+    environment:
+      <<: *environment
+    networks:
+      microservices:
+        ipv4_address: $IP_REDIS
+    <<: *common
+
+  rabbitmq:
+    container_name: rabbitmq
+    build: ./rabbitmq
+    environment:
+      <<: *environment
+    networks:
+      microservices:
+        ipv4_address: $IP_RABBITMQ
+    <<: *common
+
+  # sendmessage:
+  #   container_name: sendmessage
+  #   build: ./sendmessage
+  #   environment:
+  #     <<: *api-environment
+  #     QUEUE_NAMES: "$QUEUE_JOBS_REMOTIVE,$QUEUE_JOBS_DYNAMITE,$QUEUE_JOBS_ZIPRECRUITER"
+  #   networks:
+  #     microservices:
+  #       ipv4_address: $IP_SENDMESSAGE
+  #   depends_on:
+  #     - redis
+  #     - rabbitmq
+  #   <<: *common
+
+  remotive:
+    container_name: remotive
+    build: ./remotive
+    environment:
+      <<: *api-environment
+      CACHE_REDIS_KEY: "REMOTIVE_JOBS"
+      ENDPOINT_API: "https://remotive.com/api/remote-jobs"
+      QUEUE_JOBS: $QUEUE_JOBS_REMOTIVE
+    networks:
+      microservices:
+        ipv4_address: $IP_REMOTIVE
+    depends_on:
+      - redis
+      - rabbitmq
+    <<: *common
+
+  dynamite:
+    container_name: dynamite
+    build: ./dynamite
+    environment:
+      <<: *api-environment
+      CACHE_REDIS_KEY: "DYNAMITE_JOBS"
+      ENDPOINT_API: "https://49hkl9g3sb-dsn.algolia.net/1/indexes/prod_jobs/query?x-algolia-agent=Algolia%20for%20JavaScript%20(4.22.0)%3B%20Browser%20(lite)&x-algolia-api-key=5c5e6ae4a54a14e4c1848efa50384242&x-algolia-application-id=49HKL9G3SB"
+      DYNAMITE_POST_BODY: '{"query":"","disableExactOnAttributes":["description"],"facetFilters":[["flags.isVisible:true","flags.isFinished:true","flags.isExpired:true","flags.isFulfilled:true"],"flags.isBlocked:false",["locationSlugs:australia","locationSlugs:AU","locationSlugs:CX","locationSlugs:CC","locationSlugs:HM","locationSlugs:NZ","locationSlugs:NF","locationSlugs:oceania"]],"hitsPerPage":10000,"optionalFilters":[],"page":0,"removeWordsIfNoResults":"lastWords"}'
+      QUEUE_JOBS: $QUEUE_JOBS_DYNAMITE
+    networks:
+      microservices:
+        ipv4_address: $IP_DYNAMITE
+    depends_on:
+      - redis
+      - rabbitmq
+    <<: *common
+
+  ziprecruiter:
+    container_name: ziprecruiter
+    build: ./ziprecruiter
+    environment:
+      <<: *api-environment
+      CACHE_REDIS_KEY: "ZIPRECRUITER_JOBS"
+      ENDPOINT_API: "123456"
+      QUEUE_JOBS: $QUEUE_JOBS_ZIPRECRUITER
+    networks:
+      microservices:
+        ipv4_address: $IP_ZIPRECRUITER
+    ports:
+      - 8000:8080
+    depends_on:
+      - redis
+      - rabbitmq
+    <<: *common
