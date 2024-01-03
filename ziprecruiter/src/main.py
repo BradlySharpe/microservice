@@ -1,11 +1,14 @@
 import os
+import sys
 import pika
 import time
 import threading
 import logging
 from flask import Flask
-from route import getFetch
-from queue import messageHandler
+from routes.route import get_fetch
+from queues.queue import message_handler
+from controllers.ziprecruiter import ZipRecruiter
+import traceback
 
 app = Flask(__name__)
 
@@ -75,7 +78,7 @@ def create_queue_listener():
 
         queue_name = os.environ['QUEUE_JOBS']
         channel.queue_declare(queue=queue_name)
-        channel.basic_consume(queue=queue_name, on_message_callback=messageHandler, auto_ack=True)
+        channel.basic_consume(queue=queue_name, on_message_callback=message_handler, auto_ack=True)
 
         logger.info("Starting to consume messages")
         channel.start_consuming()
@@ -85,17 +88,22 @@ def create_queue_listener():
 @app.route('/fetch', methods=['GET'])
 def handle_fetch_request():
     logger.info("Handling fetch request")
-    return getFetch()
+    return get_fetch()
 
 def create_api():
     try:
-        os.system(f"gunicorn -w 1 -b 0.0.0.0:{os.environ['API_PORT']} main:app")
+        os.system(f"gunicorn -w 1 -b 0.0.0.0:{os.environ['API_PORT']} --chdir ./dist/ main:app")
     except Exception as ex:
         logger.error("An error occurred while creating the API", ex)
+
+def append_to_path():
+    module_path = os.path.abspath(__file__)
+    sys.path.append(module_path)
 
 def init():
     try:
         ensure_environment_variables_are_configured()
+        append_to_path()
         ensure_rabbitmq_connection()
 
         queue_thread = threading.Thread(target=create_queue_listener)
